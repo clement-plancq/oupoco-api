@@ -3,11 +3,15 @@
 import random
 import pickle
 import json
+import sqlite3
 from collections import Counter, defaultdict
 
 import logging
 logger = logging.getLogger(__name__)
 
+db = 'oupoco.db'
+conn = sqlite3.connect(db)
+ 
 types_rimes = json.load(open('bd_rimes.json', 'r'))
 meta = json.load(open('bd_meta.json', 'r'))
 schemas = {
@@ -40,6 +44,30 @@ def __verse2txtmeta__(verse):
     res['text'] = verse['texte']
     res['meta'] = meta[verse['id_sonnet']]
     return res
+
+def get_authors():
+    """
+    Query the db, returns the list of authors
+    Returns:
+        - list of authors in the oupoco db
+    """
+    c = conn.cursor()
+    c.execute("SELECT DISTINCT auteur FROM tb_sonnets")
+    authors_tuples = c.fetchall()
+    authors = [author_tuple[0] for author_tuple in authors_tuples]
+    return authors
+
+def get_themes():
+    """
+    Query the db, returns the list of themes
+    Returns:
+        - list of themes in the oupoco db
+    """
+    c = conn.cursor()
+    c.execute("SELECT DISTINCT theme FROM tb_sonnets")
+    themes_tuples = c.fetchall()
+    themes = [theme_tuple[0] for theme_tuple in themes_tuples]
+    return themes
 
 def paramdate(rimes, cle):
     erreur=[]
@@ -124,11 +152,7 @@ def filter_by_authors(rimes, authors):
         a list of list. Same structure as the arg rimes but filtered by authors
     """
     liste_choix = [id_sonnet for id_sonnet in meta if meta[id_sonnet]['auteur'] in authors]
-    # liste_choix=list()
-    # for sonnet in meta:
-    #     for i in auteurs: 
-    #         if meta[sonnet]['auteur']== i:
-    #             liste_choix.append(sonnet)
+    
 
     if len(liste_choix) < sonnets_min_len:
         return list()

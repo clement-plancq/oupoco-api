@@ -61,9 +61,9 @@ api = Api(app, version='0.9', title="API du projet Oupoco", description="API de
 
 bd_meta = 'bd_meta.json'
 meta = json.load(open(bd_meta))
-authors = set([meta[s]['auteur'] for s in meta])
-themes = set(meta[s]['thème'] for s in meta)
 
+authors = generation_sonnets.get_authors()
+themes = generation_sonnets.get_themes()
 schemas = {
     'sonnet_sicilien1':('ABAB','ABAB','CDE','CDE'),
     'sonnet_sicilien2':('ABAB','ABAB','CDC','CDC'),
@@ -90,7 +90,7 @@ class Schemas(Resource):
 class Authors(Resource):
     def get(self):
         """ Returns the list of authors in the database """
-        return jsonify(list(authors))
+        return jsonify(authors)
 
 @api.route('/dates')
 class Dates(Resource):
@@ -101,8 +101,8 @@ class Dates(Resource):
 @api.route('/themes')
 class Themes(Resource):
     def get(self):
-        """ Returns the list of available themes """
-        return jsonify(list(themes))
+        """ Returns the list of themes in the database """
+        return jsonify(themes)
 
 
 new_parser = reqparse.RequestParser()
@@ -140,6 +140,7 @@ class New(Resource):
         else:
             res = {'error': "Génération impossible, veuillez modifier vos paramètres", 'date': get_date_time()}
             return jsonify(res)
+            
 @app.route("/new-html")
 def new_html():
     """ Returns a new sonnet in HTML """
