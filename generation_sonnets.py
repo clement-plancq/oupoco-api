@@ -27,6 +27,7 @@ schemas = {
     'sonnet_spencerien':('ABAB','BCBC','CDCD','EE'),
     'sonnet_irrationnel':('AAB','C','BAAB','C','CDCCD')
     }
+dates = ('1800-1830', '1831-1850', '1851-1870', '1871-1890', '1891-1900', '1901-1950')
 sonnets_min_len = 6
 
 def __verse2txtmeta__(verse):
@@ -45,29 +46,110 @@ def __verse2txtmeta__(verse):
     res['meta'] = meta[verse['id_sonnet']]
     return res
 
-def get_authors():
+def __compute_where_clause__(constraints):
+    """
+    Args:
+        - constraints: dict of field: list of values (list)
+    """
+    clause = "where "
+    if not(constraints):
+        return ""
+    else:
+        for i, field in enumerate(constraints):
+            if field == 'date':
+                start, end = [int(val) for val in constraints[field].split('-')]
+                if i != 0:
+                    clause += "AND "
+                clause += f"date between {start} and {end} "
+            else:
+                if i != 0:
+                    clause += "AND "
+                for j, value in enumerate(constraints[field]):
+                    if j != 0:
+                        clause += "OR "
+                    clause += f"{field} = '{value}' "
+    return clause
+
+def get_authors(date="", themes=[]):
     """
     Query the db, returns the list of authors
+    according to the given args
+    Args:
+        - date: (str) date (start-end)
+        - themes: list of str
     Returns:
         - list of authors in the oupoco db
     """
+    constraints = {}
+    if date:
+        constraints['date'] = date
+    if themes:
+        constraints['theme'] = themes
+    where_clause = __compute_where_clause__(constraints)
+
     c = conn.cursor()
-    c.execute("SELECT DISTINCT auteur FROM tb_sonnets")
+    if where_clause:
+        print(f"SELECT DISTINCT auteur FROM tb_sonnets {where_clause}")
+        c.execute(f"SELECT DISTINCT auteur FROM tb_sonnets {where_clause}")
+    else:
+        c.execute("SELECT DISTINCT auteur FROM tb_sonnets")
     authors_tuples = c.fetchall()
     authors = [author_tuple[0] for author_tuple in authors_tuples]
     return authors
 
-def get_themes():
+def get_themes(date="", authors=[]):
     """
     Query the db, returns the list of themes
+    according to the given args
+    Args:
+        - date: (str) date (start-end)
+        - authors: list of str
     Returns:
         - list of themes in the oupoco db
     """
+    constraints = {}
+    if date:
+        constraints['date'] = date
+    if authors:
+        constraints['auteur'] = authors
+    where_clause = __compute_where_clause__(constraints)
+
     c = conn.cursor()
-    c.execute("SELECT DISTINCT theme FROM tb_sonnets")
+    if where_clause:
+        print(f"SELECT DISTINCT theme FROM tb_sonnets {where_clause}")
+        c.execute(f"SELECT DISTINCT theme FROM tb_sonnets {where_clause}")
+    else:
+        c.execute("SELECT DISTINCT theme FROM tb_sonnets")
     themes_tuples = c.fetchall()
     themes = [theme_tuple[0] for theme_tuple in themes_tuples]
     return themes
+
+def get_dates(themes=[], authors=[]):
+    """
+    Query the db, returns the list of dates intervals
+    according to the given args
+    Args:
+        - themes: list of str
+        - authors: list of str
+    Returns:
+        - list of dates intervals
+    """
+    constraints = {}
+    if themes:
+        constraints['theme'] = themes
+    if authors:
+        constraints['auteur'] = authors
+    where_clause = __compute_where_clause__(constraints)
+
+    c = conn.cursor()
+    if where_clause:
+        print(f"SELECT DISTINCT date FROM tb_sonnets {where_clause}")
+        c.execute(f"SELECT DISTINCT date FROM tb_sonnets {where_clause}")
+    else:
+        c.execute("SELECT DISTINCT date FROM tb_sonnets")
+    date_tuples = c.fetchall()
+    dates = [date_tuple[0] for date_tuple in dates_tuples]
+    return dates
 
 def paramdate(rimes, cle):
     erreur=[]
