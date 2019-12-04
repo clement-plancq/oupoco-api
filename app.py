@@ -101,7 +101,7 @@ class Schemas(Resource):
 class Authors(Resource):
     def get(self):
         """ Returns the list of authors in the database """
-        return jsonify(authors)
+        return jsonify(list(authors))
 
 
 @api.route("/dates")
@@ -115,7 +115,7 @@ class Dates(Resource):
 class Themes(Resource):
     def get(self):
         """ Returns the list of themes in the database """
-        return jsonify(themes)
+        return jsonify(list(themes))
 
 
 new_parser = reqparse.RequestParser()
